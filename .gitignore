@@ -1,0 +1,11 @@
+.*.swp
+out/
+lib/
+.idea/
+storm.iml
+.DS_store
+
+src/storm/parser/StormLexer.java
+src/storm/parser/StormLexer.tokens
+src/storm/parser/StormParser.java
+src/storm/parser/StormParser.tokens
