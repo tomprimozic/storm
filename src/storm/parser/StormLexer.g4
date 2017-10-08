@@ -9,7 +9,7 @@ lexer grammar StormLexer;
   private Stack<Integer> parenCounts = new Stack<Integer>();
 }
 
-tokens { STRING_PART, STRING_END }
+tokens { STRING_PART, STRING_END, STRING_EOF }
 
 WHITESPACE:         [ \t\r\n]+ -> skip ;
 
@@ -55,6 +55,7 @@ STRING_DOUBLE_CHARACTER:    ~[\\"] -> more ;
 STRING_DOUBLE_ESCAPE:       '\\' [trn"'\\] -> more ;
 STRING_DOUBLE_END:          '"' -> type(STRING_END), popMode ;
 STRING_DOUBLE_PART:         '\\(' { parenCounts.push(currentParenCount); currentParenCount = 0; } -> type(STRING_PART), pushMode(DEFAULT_MODE) ;
+STRING_DOUBLE_EOF:          EOF -> type(STRING_EOF);
 
 
 mode STRING_SINGLE_MODE;
@@ -63,3 +64,4 @@ STRING_SINGLE_CHARACTER:    ~[\\'] -> more ;
 STRING_SINGLE_ESCAPE:       '\\' [trn"'\\] -> more ;
 STRING_SINGLE_END:          '\'' -> type(STRING_END), popMode ;
 STRING_SINGLE_PART:         '\\(' { parenCounts.push(currentParenCount); currentParenCount = 0; } -> type(STRING_PART), pushMode(DEFAULT_MODE) ;
+STRING_SINGLE_EOF:          EOF -> type(STRING_EOF);
