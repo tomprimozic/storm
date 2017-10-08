@@ -31,5 +31,6 @@ atomic returns [Node result]:
       INTEGER       { $result = integer($INTEGER); }
     | 'true'        { $result = bool(true); }
     | 'false'       { $result = bool(false); }
+    | (parts+=STRING_PART exprs+=expr)* parts+=STRING_END       { $result = str($parts, $exprs); }
     | '(' expr ')'  { $result = $expr.result; }
     ;
