@@ -18,12 +18,27 @@ MINUS:      '-' ;
 STAR:       '*' ;
 SLASH:      '/' ;
 SEMICOLON:  ';' ;
+LBRACE:     '{' ;
+RBRACE:     '}' ;
+ASSIGN:     '=' ;
+COMMA:      ',' ;
+DOT:        '.' ;
+EQ:         '==' ;
+NE:         '!=' ;
+GE:         '>=' ;
+LE:         '<=' ;
+GT:         '>' ;
+LT:         '<' ;
 
 IF:         'if' ;
 THEN:       'then' ;
 ELSE:       'else' ;
 TRUE:       'true' ;
 FALSE:      'false' ;
+AND:        'and' ;
+OR:         'or' ;
+
+IDENT:                      [_a-zA-Z] ([-_a-zA-Z0-9]* [_a-zA-Z0-9])? ;
 
 INTEGER:                    [0-9]+ ;
 
