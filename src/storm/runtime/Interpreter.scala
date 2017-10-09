@@ -32,6 +32,7 @@ object Context {
       "-" -> Builtins.`-`,
       "*" -> Builtins.`*`,
       "/" -> Builtins.`/`,
+      "^" -> Builtins.`^`,
       "math" -> Value.Record(Map(
         "abs" -> Builtins.`math.abs`,
         "gcd" -> Builtins.`math.gcd`,

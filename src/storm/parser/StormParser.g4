@@ -28,6 +28,7 @@ statement returns [Node result]:
 
 pattern returns [Node result]:
       atomic                { $result = $atomic.result; }
+    | op=('^' | '*' | '/' | '+' | '-' | '==' | '!=' | '<' | '>' | '<=' | '>=')                      { $result = ident($op); }
     ;
 
 expr returns [Node result]:
@@ -49,10 +50,14 @@ comparison returns [Node result]:
     ;
 
 arithmetic returns [Node result]:
-      atomic        { $result = $atomic.result; }
+      <assoc=right>left=arithmetic op='^' right=arithmetic  { $result = op($left.result, $op, $right.result); }
     | left=arithmetic op=('*' | '/') right=arithmetic       { $result = op($left.result, $op, $right.result); }
-    | left=arithmetic op=('+' | '-') right=arithmetic       { $result = op($left.result, $op, $right.result); }
+    | op=('+' | '-') '(' args+=expr (',' args+=expr )+ ','? ')'       { $result = call($op, $args); }
+    | op=('^' | '*' | '/' | '==' | '!=' | '<' | '>' | '<=' | '>=') '(' (args+=expr (',' args+=expr )* ','?)? ')'       { $result = call($op, $args); }
     | op=('-' | '+') arithmetic                             { $result = op($op, $arithmetic.result); }
+    | atomic                                                { $result = $atomic.result; }
+    | op=('^' | '*' | '/' | '+' | '-' | '==' | '!=' | '<' | '>' | '<=' | '>=')                      { $result = ident($op); }
+    | left=arithmetic op=('+' | '-') right=arithmetic       { $result = op($left.result, $op, $right.result); }
     ;
 
 atomic returns [Node result]:
@@ -62,7 +67,7 @@ atomic returns [Node result]:
     | 'false'               { $result = bool(false); }
     | '(' stmts+=statement (';' stmts+=statement)* ';'? ')'     { $result = sequence($stmts); }
     | (parts+=STRING_PART exprs+=expr)* parts+=STRING_END       { $result = str($parts, $exprs); }
-    | record=atomic '.' IDENT                                   { $result = field($record.result, $IDENT); }
+    | value=atomic '.' IDENT                                    { $result = field($value.result, $IDENT); }
     | fn=atomic '(' (args+=expr (',' args+=expr )* ','?)? ')'   { $result = call($fn.result, $args); }
-    | '{' (fields+=IDENT '=' values+=expr (',' fields+=IDENT '=' values+=expr)* ','?)? '}'           { $result = record($fields, $values); }
+    | '{' (fields+=IDENT '=' values+=expr (',' fields+=IDENT '=' values+=expr)* ','?)? '}'          { $result = record($fields, $values); }
     ;

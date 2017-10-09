@@ -17,6 +17,7 @@ PLUS:       '+' ;
 MINUS:      '-' ;
 STAR:       '*' ;
 SLASH:      '/' ;
+CARET:      '^' ;
 SEMICOLON:  ';' ;
 LBRACE:     '{' ;
 RBRACE:     '}' ;

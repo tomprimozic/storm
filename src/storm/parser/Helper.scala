@@ -49,6 +49,7 @@ abstract class Helper(input: TokenStream) extends org.antlr.v4.runtime.Parser(in
   }
   def field(expr: Node, field: Token) = Field(expr, field.getText)
   def call(fn: Node, args: java.util.List[ExprContext]) = Call(fn, args.asScala.map(_.result))
+  def call(op: Token, args: java.util.List[ExprContext]) = Call(Ident(op.getText), args.asScala.map(_.result))
   def record(fields: java.util.List[Token], values: java.util.List[ExprContext]) = {
     assert(fields.size == values.size)
     Record(fields.asScala.map(_.getText).zip(values.asScala.map(_.result)))

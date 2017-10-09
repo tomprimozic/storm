@@ -30,6 +30,8 @@ class InterpreterTest extends FunSuite {
     assert(eval("let math = 1; math") == Value(1))
     assert(eval("f(x, y) = x * y - 2; f(3, 5)") == Value(13))
     assert(eval("x = 0; f() = x; x = 4; f()") == Value(4))
+    assert(eval("let + = *; let / = -; 6 / 2 + 5") == Value(20))
+    assert(eval("{x = 3 ^ 2 ^ 3, y = *()}") == Value.Record(Map("x" -> Value(6561), "y" -> Value(1))))
   }
 
   test("errors") {

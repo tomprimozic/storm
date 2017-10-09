@@ -39,6 +39,7 @@ object Builtins {
   private def fn_II_I(fn: (Int, Int) => Int): Value.Function = { case Seq(Value.Integer(x), Value.Integer(y)) => Value(fn(x, y)) }
 
   val `/` = fn_II_I(_ / _)
+  val `^` = fn_II_I(Math.pow(_, _).toInt)
   val `math.abs` = fn_I_I(_.abs)
   val `math.gcd` = fn_II_I((x, y) => BigInt(x).gcd(BigInt(y)).toInt)
   val `math.min` = fn_II_I(_.min(_))

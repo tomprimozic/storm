@@ -40,6 +40,14 @@ class ParserTest extends FunSuite {
     assert(parse("x -> if y then x else x * 2") == nodes(Arrow(Seq("x"), If("y", "x", Binary("x", "*", 2)))))
     assert(parse("f(2, (x = 4; x), 7)") == nodes(Call("f", Seq(2, Sequence(Seq(Assign("x", 4), "x")), 7))))
     assert(parse("{useless = () -> {}, add = (x, y) -> x + y}") == nodes(Record(Seq(("useless", Arrow(Seq.empty, Record(Seq.empty))), ("add", Arrow(Seq("x", "y"), Binary("x", "+", "y")))))))
+    assert(parse("+") == nodes(Ident("+")))
+    assert(parse("-(8)") == nodes(Unary("-", 8)))
+    assert(parse("-(8, 5)") == nodes(Call("-", Seq(8, 5))))
+    assert(parse("-2^4^6") == nodes(Unary("-", Binary(2, "^", Binary(4, "^", 6)))))
+    assert(parse("-(2)^4") == nodes(Unary("-", Binary(2, "^", 4))))
+    assert(parse("*(2)^4") == nodes(Binary(Call("*", Seq(2)), "^", 4)))
+    assert(parse("-(2, 6)^3") == nodes(Binary(Call("-", Seq(2, 6)), "^", 3)))
+    assert(parse("^ + * > < < ^ < / / /") == nodes(Cmp(Seq(">", "<", "<"), Seq(Binary("^", "+", "*"), "<", "^", Binary("/", "/", "/")))))
   }
 
   test("string interpolation") {
@@ -51,6 +59,7 @@ class ParserTest extends FunSuite {
     assert(parse("print 1") == nodes(Print(1)))
     assert(parse("x = 6; x") == nodes(Assign("x", 6), "x"))
     assert(parse("let x = 1; var y = 2; f(x) = x + 1") == nodes(Declare(Declare.Let, "x", 1), Declare(Declare.Var, "y", 2), Assign(Call("f", Seq("x")), Binary("x", "+", 1))))
+    assert(parse("sum(list) = list.fold(+)") == nodes(Assign(Call("sum", Seq("list")), Call(Field("list", "fold"), Seq("+")))))
   }
 
   test("errors") {
@@ -67,6 +76,7 @@ class ParserTest extends FunSuite {
     assertThrows[Exception] { parse("'xxx") }
     assertThrows[Exception] { parse("'\\c") }
     assertThrows[Exception] { parse("{,}") }
+    assertThrows[Exception] { parse("+(4, 2).field") }
   }
 
 }
