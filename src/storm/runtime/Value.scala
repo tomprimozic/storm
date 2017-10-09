@@ -38,7 +38,7 @@ object Value {
     case True => "true"
     case False => "false"
     case None => "none"
-    case Record(fields) => s"{${ fields.map { case (field, value) => s"$field = ${ toString(value) }"}.mkString(", ") }"
+    case Record(fields) => s"{${ fields.map { case (field, value) => s"$field = ${ toString(value) }"}.mkString(", ") }}"
   }
 }
 

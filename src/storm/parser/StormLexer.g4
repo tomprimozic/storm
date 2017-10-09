@@ -29,6 +29,7 @@ GE:         '>=' ;
 LE:         '<=' ;
 GT:         '>' ;
 LT:         '<' ;
+ARROW:      '->' ;
 
 IF:         'if' ;
 THEN:       'then' ;
@@ -37,6 +38,9 @@ TRUE:       'true' ;
 FALSE:      'false' ;
 AND:        'and' ;
 OR:         'or' ;
+LET:        'let' ;
+VAR:        'var' ;
+PRINT:      'print' ;
 
 IDENT:                      [_a-zA-Z] ([-_a-zA-Z0-9]* [_a-zA-Z0-9])? ;
 

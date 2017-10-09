@@ -11,9 +11,20 @@ case class Interpolated(parts: Seq[String], exprs: Seq[Node]) extends Node
 case class Field(expr: Node, field: String) extends Node
 case class Call(fn: Node, args: Seq[Node]) extends Node
 case class Record(fields: Seq[(String, Node)]) extends Node
+case class Arrow(params: Seq[String], body: Node) extends Node
 case class Binary(left: Node, op: String, right: Node) extends Node
 case class Unary(op: String, expr: Node) extends Node
 case class Cmp(ops: Seq[String], exprs: Seq[Node]) extends Node
 case class And(exprs: Seq[Node]) extends Node
 case class Or(exprs: Seq[Node]) extends Node
 case class If(cond: Node, thenExpr: Node, elseExpr: Node) extends Node
+case class Assign(pattern: Node, expr: Node) extends Node
+case class Declare(kind: Declare.Kind, pattern: Node, expr: Node) extends Node
+case class Print(expr: Node) extends Node
+case class Sequence(exprs: Seq[Node]) extends Node
+
+object Declare {
+  sealed abstract class Kind
+  case object Var extends Kind
+  case object Let extends Kind
+}

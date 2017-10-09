@@ -3,7 +3,7 @@ package storm.parser
 import scala.collection.JavaConverters._
 import org.antlr.v4.runtime.{Token, TokenStream}
 import storm.ast._
-import storm.parser.StormParser.{ArithmeticContext, ComparisonContext, ExprContext}
+import storm.parser.StormParser.{ArithmeticContext, ComparisonContext, ExprContext, StatementContext}
 
 
 abstract class Helper(input: TokenStream) extends org.antlr.v4.runtime.Parser(input) {
@@ -37,7 +37,7 @@ abstract class Helper(input: TokenStream) extends org.antlr.v4.runtime.Parser(in
     b.toString()
   }
 
-  def seq(nodes: java.util.List[ExprContext]) = nodes.asScala.map(_.result)
+  def seq(nodes: java.util.List[StatementContext]) = nodes.asScala.map(_.result)
 
   def ident(n: Token) = Ident(n.getText)
   def bool(b: Boolean) = Bool(b)
@@ -53,10 +53,16 @@ abstract class Helper(input: TokenStream) extends org.antlr.v4.runtime.Parser(in
     assert(fields.size == values.size)
     Record(fields.asScala.map(_.getText).zip(values.asScala.map(_.result)))
   }
+  def arrow(param: Token, body: Node) = Arrow(Seq(param.getText), body)
+  def arrow(params: java.util.List[Token], body: Node) = Arrow(params.asScala.map(_.getText), body)
   def op(op: Token, expr: Node) = Unary(op.getText, expr)
   def op(left: Node, op: Token, right: Node) = Binary(left, op.getText, right)
   def cmp(ops: java.util.List[Token], exprs: java.util.List[ArithmeticContext]) = Cmp(ops.asScala.map(_.getText), exprs.asScala.map(_.result))
   def and(exprs: java.util.List[ComparisonContext]) = And(exprs.asScala.map(_.result))
   def or(exprs: java.util.List[ComparisonContext]) = Or(exprs.asScala.map(_.result))
   def if_(cond: Node, thenExpr: Node, elseExpr: Node) = If(cond, thenExpr, elseExpr)
+  def assign(pattern: Node, expr: Node) = Assign(pattern, expr)
+  def declare(kind: Token, pattern: Node, expr: Node) = Declare(kind = kind.getText match { case "var" => Declare.Var case "let" => Declare.Let }, pattern, expr)
+  def print(expr: Node) = Print(expr)
+  def sequence(statements: java.util.List[StatementContext]) = if(statements.size() == 1) statements.get(0).result else Sequence(statements.asScala.map(_.result))
 }
