@@ -6,9 +6,9 @@ import scala.annotation.tailrec
 
 
 class Binding(val mutable: Boolean, var value: Value)
-class Context private (parent: Option[Context] = None) {
+class Context private (parent: Option[Context] = None, val inLoop: Boolean = false, val inFunction: Boolean = false) {
   val bindings = collection.mutable.Map[String, Binding]()
-  def child() = new Context(parent = Some(this))
+  def child(inLoop: Boolean = inLoop, inFunction: Boolean = inFunction) = new Context(parent = Some(this), inLoop = inLoop, inFunction = inFunction)
   def copy() = {
     val result = new Context(parent)
     result.bindings ++= bindings
@@ -37,7 +37,8 @@ object Context {
         "abs" -> Builtins.`math.abs`,
         "gcd" -> Builtins.`math.gcd`,
         "max" -> Builtins.`math.max`,
-        "min" -> Builtins.`math.min`
+        "min" -> Builtins.`math.min`,
+        "mod" -> Builtins.`math.mod`
       ))
     ).foreach { case (name, value) => context.bindings += name -> new Binding(mutable = false, value) }
     context
@@ -50,6 +51,10 @@ object Interpreter {
   case class ExecutionException(message: String) extends Exception(message)
   def error(message: String) = throw ExecutionException(message)
   def `not implemented` = error("not implemented")
+
+  case class ReturnException(value: Option[Value]) extends RuntimeException
+  case object BreakException extends RuntimeException
+  case object ContinueException extends RuntimeException
 
   def eval(nodes: Seq[Node])(implicit context: Context): Value = nodes.foldLeft[Value](Value.None) { case (_, node) => eval(node) }
 
@@ -81,9 +86,13 @@ object Interpreter {
       val closure = context.copy()
       def apply(values: Seq[Value]) = {
         if (values.size != params.size) error("unexpected number of parameters")
-        val context = closure.child()
+        val context = closure.child(inFunction = true, inLoop = false)
         params.zip(values).foreach { case (parameter, value) => context.bindings += parameter -> new Binding(mutable = false, value) }
-        eval(body)(context)
+        try {
+          eval(body)(context)
+        } catch {
+          case ReturnException(value) => value.getOrElse(Value.None)
+        }
       }
     }
     case Binary(left, op, right) => eval(Call(Ident(op), Seq(left, right)))
@@ -129,5 +138,25 @@ object Interpreter {
     case Declare(_, _, _) => `not implemented`
     case Print(expr) => println(Value.toString(eval(expr))); Value.None
     case Sequence(exprs) => eval(exprs)(context.child())
+    case While(cond, body) =>
+      var break = false
+      while(!break && eval(cond).bool.value) {
+        try eval(body)(context.child(inLoop = true))
+        catch {
+          case BreakException => break = true
+          case ContinueException =>
+        }
+      }
+      Value.None
+    case BlockIf(cond, thenBlock, elseBlock) => if(eval(cond).bool.value) eval(thenBlock)(context.child()) else eval(elseBlock)(context.child())
+    case Return(expr) =>
+      if(!context.inFunction) error("invalid return")
+      throw ReturnException(expr.map(eval))
+    case Break =>
+      if(!context.inLoop) error("invalid break")
+      throw BreakException
+    case Continue =>
+      if(!context.inLoop) error("invalid continue")
+      throw ContinueException
   }
 }

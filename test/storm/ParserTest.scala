@@ -47,6 +47,7 @@ class ParserTest extends FunSuite {
     assert(parse("-(2)^4") == nodes(Unary("-", Binary(2, "^", 4))))
     assert(parse("*(2)^4") == nodes(Binary(Call("*", Seq(2)), "^", 4)))
     assert(parse("-(2, 6)^3") == nodes(Binary(Call("-", Seq(2, 6)), "^", 3)))
+    assert(parse("exit((while true {}))") == nodes(Call("exit", Seq(While(Bool(true), Seq.empty)))))
     assert(parse("^ + * > < < ^ < / / /") == nodes(Cmp(Seq(">", "<", "<"), Seq(Binary("^", "+", "*"), "<", "^", Binary("/", "/", "/")))))
   }
 
@@ -60,6 +61,9 @@ class ParserTest extends FunSuite {
     assert(parse("x = 6; x") == nodes(Assign("x", 6), "x"))
     assert(parse("let x = 1; var y = 2; f(x) = x + 1") == nodes(Declare(Declare.Let, "x", 1), Declare(Declare.Var, "y", 2), Assign(Call("f", Seq("x")), Binary("x", "+", 1))))
     assert(parse("sum(list) = list.fold(+)") == nodes(Assign(Call("sum", Seq("list")), Call(Field("list", "fold"), Seq("+")))))
+    assert(parse("if x { 1 } else { if y { 2 } }") == nodes(BlockIf("x", Seq(1), Seq(BlockIf("y", Seq(2), Seq.empty)))))
+    assert(parse("if x { break } else if y { continue } else if z { return }") == nodes(BlockIf("x", Seq(Break), Seq(BlockIf("y", Seq(Continue), Seq(BlockIf("z", Seq(Return(None)), Seq.empty)))))))
+    assert(parse("return 4") == nodes(Return(Some(4))))
   }
 
   test("errors") {
@@ -77,6 +81,7 @@ class ParserTest extends FunSuite {
     assertThrows[Exception] { parse("'\\c") }
     assertThrows[Exception] { parse("{,}") }
     assertThrows[Exception] { parse("+(4, 2).field") }
+    assertThrows[Exception] { parse("exit(while true {})") }
   }
 
 }

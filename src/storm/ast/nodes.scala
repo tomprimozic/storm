@@ -22,6 +22,11 @@ case class Assign(pattern: Node, expr: Node) extends Node
 case class Declare(kind: Declare.Kind, pattern: Node, expr: Node) extends Node
 case class Print(expr: Node) extends Node
 case class Sequence(exprs: Seq[Node]) extends Node
+case class While(cond: Node, body: Seq[Node]) extends Node
+case class BlockIf(cond: Node, thenBlock: Seq[Node], elseBlock: Seq[Node]) extends Node
+case class Return(expr: Option[Node]) extends Node
+case object Continue extends Node
+case object Break extends Node
 
 object Declare {
   sealed abstract class Kind

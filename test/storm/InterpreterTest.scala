@@ -32,6 +32,9 @@ class InterpreterTest extends FunSuite {
     assert(eval("x = 0; f() = x; x = 4; f()") == Value(4))
     assert(eval("let + = *; let / = -; 6 / 2 + 5") == Value(20))
     assert(eval("{x = 3 ^ 2 ^ 3, y = *()}") == Value.Record(Map("x" -> Value(6561), "y" -> Value(1))))
+    assert(eval("x = 0; while x < 10 { x = x + 1; break }; x") == Value(1))
+    assert(eval("x = 0; y = 0; while x < 10 { x = x + 1; if math.mod(x, 3) == 0 { continue } else { y = y + 1 } }; y") == Value(7))
+    assert(eval("f = () -> (return 2; 3); f()") == Value(2))
   }
 
   test("errors") {
@@ -43,5 +46,9 @@ class InterpreterTest extends FunSuite {
     assertThrows[ExecutionException](eval("math = 1"))
     assertThrows[ExecutionException](eval("(x = 1; 2); x"))
     assertThrows[ExecutionException](eval("f() = x; x = 4; f()"))
+    assertThrows[ExecutionException](eval("return 1"))
+    assertThrows[ExecutionException](eval("continue"))
+    assertThrows[ExecutionException](eval("break"))
+    assertThrows[ExecutionException](eval("while true { (() -> (break))() }"))
   }
 }

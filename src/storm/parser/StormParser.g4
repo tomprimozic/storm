@@ -24,7 +24,20 @@ statement returns [Node result]:
     | pattern '=' expr                                      { $result = assign($pattern.result, $expr.result); }
     | decl=('let' | 'var') pattern '=' expr                 { $result = declare($decl, $pattern.result, $expr.result); }
     | 'print' expr                                          { $result = print($expr.result); }
+    | 'while' expr '{' statements '}'                       { $result = while_($expr.result, $statements.result); }
+    | block_if                                              { $result = $block_if.result; }
+    | 'return'                                              { $result = return_(); }
+    | 'return' expr                                         { $result = return_($expr.result); }
+    | 'break'                                               { $result = break_(); }
+    | 'continue'                                            { $result = continue_(); }
     ;
+
+block_if returns [Node result]:
+      'if' expr '{' statements '}'                          { $result = block_if($expr.result, $statements.result); }
+    | 'if' expr '{' then_block=statements '}' 'else' '{' else_block=statements '}'              { $result = block_if($expr.result, $then_block.result, $else_block.result); }
+    | 'if' expr '{' then_block=statements '}' 'else' block_if       { $result = block_if($expr.result, $then_block.result, $block_if.result); }
+    ;
+
 
 pattern returns [Node result]:
       atomic                { $result = $atomic.result; }

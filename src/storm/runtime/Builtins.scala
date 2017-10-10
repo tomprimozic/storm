@@ -44,4 +44,5 @@ object Builtins {
   val `math.gcd` = fn_II_I((x, y) => BigInt(x).gcd(BigInt(y)).toInt)
   val `math.min` = fn_II_I(_.min(_))
   val `math.max` = fn_II_I(_.max(_))
+  val `math.mod` = fn_II_I(_ % _)
 }
