@@ -11,6 +11,8 @@ case class Interpolated(parts: Seq[String], exprs: Seq[Node]) extends Node
 case class Field(expr: Node, field: String) extends Node
 case class Call(fn: Node, args: Seq[Node]) extends Node
 case class Record(fields: Seq[(String, Node)]) extends Node
+case class List(elements: Seq[Node]) extends Node
+case class Item(expr: Node, args: Seq[Node]) extends Node
 case class Arrow(params: Seq[String], body: Node) extends Node
 case class Binary(left: Node, op: String, right: Node) extends Node
 case class Unary(op: String, expr: Node) extends Node
@@ -25,9 +27,12 @@ case class Print(expr: Node) extends Node
 case class Sequence(exprs: Seq[Node]) extends Node
 case class While(cond: Node, body: Seq[Node]) extends Node
 case class BlockIf(cond: Node, thenBlock: Seq[Node], elseBlock: Seq[Node]) extends Node
+case class ForIn(pattern: Node, expr: Node, body: Seq[Node]) extends Node
 case class Return(expr: Option[Node]) extends Node
 case object Continue extends Node
 case object Break extends Node
+case class Range(from: Node, to: Node, inclusive: Boolean) extends Node
+case class Spread(expr: Node) extends Node
 
 object Declare {
   sealed abstract class Kind

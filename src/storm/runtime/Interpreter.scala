@@ -33,7 +33,7 @@ object Context {
       "*" -> Builtins.`*`,
       "/" -> Builtins.`/`,
       "^" -> Builtins.`^`,
-      "math" -> Value.Record(Map(
+      "math" -> Value.Record(collection.mutable.Map(
         "abs" -> Builtins.`math.abs`,
         "gcd" -> Builtins.`math.gcd`,
         "max" -> Builtins.`math.max`,
@@ -87,16 +87,44 @@ object Interpreter {
       }
       assert(!partsIter.hasNext)
       Value(result.toString())
-    case Field(expr, field) => eval(expr).record.fields(field)
-    case Call(fn, exprs) => eval(fn).function.apply(exprs.map(eval))
+    case Field(expr, field) => eval(expr).getField(field)
+    case Call(fn, exprs) => eval(fn).call(exprs.map(eval))
     case Record(fields) =>
       val record = collection.mutable.Map[String, Value]()
       fields.foreach { case (field, expr) =>
         if(record.contains(field)) error(s"duplicate field $field")
         record += field -> eval(expr)
       }
-      Value.Record(record.toMap)
+      Value.Record(record)
+    case List(elements) =>
+      val values = collection.mutable.ArrayBuffer[Value]()
+      elements.foreach {
+        case Spread(expr) => values ++= eval(expr).iter()
+        case expr => values += eval(expr)
+      }
+      Value.List(values)
+    case Item(expr, args) => eval(expr).getItem(args.map(eval))
     case Arrow(params, body) => new Closure(params, body)
+    case Binary(left, assignOp, right) if assignOp.endsWith("=") =>
+      val op = assignOp.dropRight(1)
+      left match {
+        case Ident(_) => eval(Assign(left, Binary(left, op, right)))
+        case Field(expr, field) =>
+          val obj = eval(expr)
+          val leftValue = obj.getField(field)
+          val rightValue = eval(right)
+          val result = context.value(op).call(Seq(leftValue, rightValue))
+          obj.setField(field, result)
+        case Item(expr, args) =>
+          val obj = eval(expr)
+          val argValues = args.map(eval)
+          val leftValue = obj.getItem(argValues)
+          val rightValue = eval(right)
+          val result = context.value(op).call(Seq(leftValue, rightValue))
+          obj.setItem(argValues, result)
+        case _ => `not implemented`
+      }
+      Value.None
     case Binary(left, op, right) => eval(Call(Ident(op), Seq(left, right)))
     case Unary(op, expr) => eval(Call(Ident(op), Seq(expr)))
     case Cmp(ops, exprs) =>
@@ -105,8 +133,8 @@ object Interpreter {
       def loop(previous: Value, ops: Seq[String], exprs: Seq[Node]): Value = {
         if(ops.isEmpty) Value.True else {
           val next = eval(exprs.head)
-          val op = context.value(ops.head).function
-          val result = op.apply(Seq(previous, next)).bool.value
+          val op = context.value(ops.head)
+          val result = op.call(Seq(previous, next)).bool.value
           if(result) loop(next, ops.tail, exprs.tail) else Value.False
         }
       }
@@ -127,6 +155,14 @@ object Interpreter {
       }
       Value.None
     case Assign(call@Call(Ident(_), params), body) => eval(Function(call, Seq(body)))
+    case Assign(Field(obj, field), expr) =>
+      val value = eval(expr)
+      eval(obj).setField(field, value)
+      Value.None
+    case Assign(Item(obj, args), expr) =>
+      val value = eval(expr)
+      eval(obj).setItem(args.map(eval), value)
+      Value.None
     case Assign(_, _) => `not implemented`
     case Declare(kind, Ident(name), expr) =>
       if(context.bindings.contains(name)) error(s"$name is already declared")
@@ -135,7 +171,7 @@ object Interpreter {
       Value.None
     case Declare(_, _, _) => `not implemented`
     case Function(Call(Ident(fn), parameters), body) =>
-      val params = parameters.map { case Ident(name) => name }
+      val params = parameters.map { case Ident(name) => name case _ => `not implemented` }
       if(context.bindings.contains(fn)) error(s"$fn is already declared")
       val binding = new Binding(mutable = false, null)
       context.bindings += fn -> binding
@@ -155,6 +191,19 @@ object Interpreter {
       }
       Value.None
     case BlockIf(cond, thenBlock, elseBlock) => if(eval(cond).bool.value) eval(thenBlock)(context.child()) else eval(elseBlock)(context.child())
+    case ForIn(Ident(name), expr, body) =>
+      val iterator = eval(expr).iter()
+      var break = false
+      while(!break && iterator.hasNext) {
+        val loopContext = context.child(inLoop = true)
+        loopContext.bindings += name -> new Binding(mutable = false, iterator.next())
+        try eval(body)(loopContext)
+        catch {
+          case BreakException => break = true
+          case ContinueException =>
+        }
+      }
+      Value.None
     case Return(expr) =>
       if(!context.inFunction) error("invalid return")
       throw ReturnException(expr.map(eval))
@@ -164,5 +213,10 @@ object Interpreter {
     case Continue =>
       if(!context.inLoop) error("invalid continue")
       throw ContinueException
+    case Range(from, to, inclusive) =>
+      val fromValue = eval(from)
+      val toValue = eval(to)
+      Value.Range(fromValue.int.value, toValue.int.value, inclusive)
+    case Spread(_) => error("invalid spread")
   }
 }

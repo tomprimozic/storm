@@ -22,11 +22,13 @@ statements returns [Seq<Node> result]:
 statement returns [Node result]:
       expr                                                  { $result = $expr.result; }
     | pattern '=' expr                                      { $result = assign($pattern.result, $expr.result); }
+    | pattern op=('+=' | '-=' | '*=' | '/=') expr           { $result = op($pattern.result, $op, $expr.result); }
     | decl=('let' | 'var') pattern '=' expr                 { $result = declare($decl, $pattern.result, $expr.result); }
     | ('fun' | 'function') logic '{' statements '}'         { $result = function($logic.result, $statements.result); }
     | 'print' expr                                          { $result = print($expr.result); }
     | 'while' expr '{' statements '}'                       { $result = while_($expr.result, $statements.result); }
     | block_if                                              { $result = $block_if.result; }
+    | 'for' pattern 'in' expr '{' statements '}'            { $result = for_in($pattern.result, $expr.result, $statements.result); }
     | 'return'                                              { $result = return_(); }
     | 'return' expr                                         { $result = return_($expr.result); }
     | 'break'                                               { $result = break_(); }
@@ -50,6 +52,9 @@ expr returns [Node result]:
     | 'if' cond=expr 'then' then_expr=expr 'else' else_expr=expr    { $result = if_($cond.result, $then_expr.result, $else_expr.result); }
     | IDENT '->' expr                                       { $result = arrow($IDENT, $expr.result); }
     | '(' (params+=IDENT (',' params+=IDENT)* ','?)? ')' '->' expr  { $result = arrow($params, $expr.result); }
+    | from=atomic DOTDOT to=atomic                          { $result = range($from.result, $to.result, false); }
+    | from=atomic DOTDOTDOT to=atomic                       { $result = range($from.result, $to.result, true); }
+    | DOTDOTDOT atomic                                      { $result = spread($atomic.result); }
     ;
 
 logic returns [Node result]:
@@ -83,5 +88,7 @@ atomic returns [Node result]:
     | (parts+=STRING_PART exprs+=expr)* parts+=STRING_END       { $result = str($parts, $exprs); }
     | value=atomic '.' IDENT                                    { $result = field($value.result, $IDENT); }
     | fn=atomic '(' (args+=expr (',' args+=expr )* ','?)? ')'   { $result = call($fn.result, $args); }
+    | value=atomic '[' (args+=expr (',' args+=expr )* ','?)? ']'        { $result = item($value.result, $args); }
     | '{' (fields+=IDENT '=' values+=expr (',' fields+=IDENT '=' values+=expr)* ','?)? '}'          { $result = record($fields, $values); }
+    | '[' (elements+=expr (',' elements+=expr)* ','?)? ']'      { $result = list($elements); }
     ;

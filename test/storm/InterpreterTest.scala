@@ -31,11 +31,26 @@ class InterpreterTest extends FunSuite {
     assert(eval("f(x, y) = x * y - 2; f(3, 5)") == Value(13))
     assert(eval("x = 0; f() = x; x = 4; f()") == Value(4))
     assert(eval("let + = *; let / = -; 6 / 2 + 5") == Value(20))
-    assert(eval("{x = 3 ^ 2 ^ 3, y = *()}") == Value.Record(Map("x" -> Value(6561), "y" -> Value(1))))
+    assert(eval("{x = 3 ^ 2 ^ 3, y = *()}") == Value.Record(collection.mutable.Map("x" -> Value(6561), "y" -> Value(1))))
     assert(eval("x = 0; while x < 10 { x = x + 1; break }; x") == Value(1))
     assert(eval("x = 0; y = 0; while x < 10 { x = x + 1; if math.mod(x, 3) == 0 { continue } else { y = y + 1 } }; y") == Value(7))
     assert(eval("f = () -> (return 2; 3); f()") == Value(2))
+    assert(eval("a = []; a.append(4); a.append(2); a.length") == Value(2))
     assert(eval("fib(n) = if n < 2 then n else fib(n - 2) + fib(n - 1); fib(7)") == Value(13))
+    assert(eval("[...[-1, 0], ...(1..5), 5] == [-1, 0, 1, 2, 3, 4, 5]") == Value(true))
+    assert(eval("x = [4, 5, 6]; x[1] = 7; x") == Value.List(Value(4), Value(7), Value(6)))
+    assert(eval("h = {}; h.v = true; h.v") == Value(true))
+    assert(eval("last(l) = l[-1]; last([5, 2, 8])") == Value(8))
+    assert(eval("let < = >; let == = !=; 4 < 2 == 6") == Value(true))
+    assert(eval("x = [...(1...6)]; for y in 0..3 { x.append(x.pop(0)) }; x") == Value.List(Value(4), Value(5), Value(6), Value(1), Value(2), Value(3)))
+  }
+
+  test("execution order") {
+    assert(eval("x = 0; (x += 2; math.max)((x += 7; 2), (x *= 3; 5)); x") == Value(27))
+    assert(eval("x = {a = 7}; y = 0; (y += 2; x).a += (y *= 3; 5); [x.a, y]") == Value.List(Value(12), Value(6)))
+    assert(eval("x = [-1]; y = 1; (y += 3; x)[0] *= (y *= 7; 3); [x[0], y]") == Value.List(Value(-3), Value(28)))
+    assert(eval("x = 0; (x *= 2; {}).a = (x += 9; 5); x") == Value(18))
+    assert(eval("z = 3; (z *= 7; [true, false])[1] = (z += 2; 'b'); z") == Value(35))
   }
 
   test("errors") {

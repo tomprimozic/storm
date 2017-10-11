@@ -54,6 +54,8 @@ abstract class Helper(input: TokenStream) extends org.antlr.v4.runtime.Parser(in
     assert(fields.size == values.size)
     Record(fields.asScala.map(_.getText).zip(values.asScala.map(_.result)))
   }
+  def list(elements: java.util.List[ExprContext]) = List(elements.asScala.map(_.result))
+  def item(expr: Node, args: java.util.List[ExprContext]) = Item(expr, args.asScala.map(_.result))
   def arrow(param: Token, body: Node) = Arrow(Seq(param.getText), body)
   def arrow(params: java.util.List[Token], body: Node) = Arrow(params.asScala.map(_.getText), body)
   def op(op: Token, expr: Node) = Unary(op.getText, expr)
@@ -71,8 +73,11 @@ abstract class Helper(input: TokenStream) extends org.antlr.v4.runtime.Parser(in
   def block_if(cond: Node, thenBlock: Seq[Node]) = BlockIf(cond, thenBlock, Seq.empty)
   def block_if(cond: Node, thenBlock: Seq[Node], elseBlock: Node) = BlockIf(cond, thenBlock, Seq(elseBlock))
   def block_if(cond: Node, thenBlock: Seq[Node], elseBlock: Seq[Node]) = BlockIf(cond, thenBlock, elseBlock)
+  def for_in(pattern: Node, expr: Node, body: Seq[Node]) = ForIn(pattern, expr, body)
   def return_() = Return(None)
   def return_(expr: Node) = Return(Some(expr))
   def break_() = Break
   def continue_() = Continue
+  def range(from: Node, to: Node, inclusive: Boolean) = Range(from, to, inclusive)
+  def spread(expr: Node) = Spread(expr)
 }

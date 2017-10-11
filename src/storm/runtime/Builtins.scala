@@ -8,7 +8,7 @@ object Builtins {
     if(values.forall(_.isInstanceOf[Value.Integer])) Value(values.foldLeft(0) { case (s, x) => s + x.int.value })
     else if(values.forall(_.isInstanceOf[Value.Str])) {
       val b = new StringBuilder
-      values.foreach { case Value.Str(s) => b.append(s) }
+      values.foreach { case Value.Str(s) => b.append(s) case _ => sys.error("impossible") }
       Value.Str(b.toString())
     } else {
       Interpreter.error("invalid arguments for `+`")
