@@ -64,6 +64,8 @@ class ParserTest extends FunSuite {
     assert(parse("if x { 1 } else { if y { 2 } }") == nodes(BlockIf("x", Seq(1), Seq(BlockIf("y", Seq(2), Seq.empty)))))
     assert(parse("if x { break } else if y { continue } else if z { return }") == nodes(BlockIf("x", Seq(Break), Seq(BlockIf("y", Seq(Continue), Seq(BlockIf("z", Seq(Return(None)), Seq.empty)))))))
     assert(parse("return 4") == nodes(Return(Some(4))))
+    assert(parse("function f(x) { return x + 1 }") == nodes(Function(Call("f", Seq("x")), Seq(Return(Some(Binary("x", "+", 1)))))))
+    assert(parse("fun x * y { y - x }") == nodes(Function(Binary("x", "*", "y"), Seq(Binary("y", "-", "x")))))
   }
 
   test("errors") {
@@ -83,5 +85,4 @@ class ParserTest extends FunSuite {
     assertThrows[Exception] { parse("+(4, 2).field") }
     assertThrows[Exception] { parse("exit(while true {})") }
   }
-
 }

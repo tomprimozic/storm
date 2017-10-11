@@ -56,6 +56,20 @@ object Interpreter {
   case object BreakException extends RuntimeException
   case object ContinueException extends RuntimeException
 
+  class Closure(params: Seq[String], body: Node)(implicit context: Context) extends Value.Function {
+    val closure = context.copy()
+    override def apply(values: Seq[Value]) = {
+      if (values.size != params.size) error("unexpected number of parameters")
+      val context = closure.child(inFunction = true, inLoop = false)
+      params.zip(values).foreach { case (parameter, value) => context.bindings += parameter -> new Binding(mutable = false, value) }
+      try {
+        eval(body)(context)
+      } catch {
+        case ReturnException(value) => value.getOrElse(Value.None)
+      }
+    }
+  }
+
   def eval(nodes: Seq[Node])(implicit context: Context): Value = nodes.foldLeft[Value](Value.None) { case (_, node) => eval(node) }
 
   def eval(node: Node)(implicit context: Context): Value = node match {
@@ -82,19 +96,7 @@ object Interpreter {
         record += field -> eval(expr)
       }
       Value.Record(record.toMap)
-    case Arrow(params, body) => new Value.Function {
-      val closure = context.copy()
-      def apply(values: Seq[Value]) = {
-        if (values.size != params.size) error("unexpected number of parameters")
-        val context = closure.child(inFunction = true, inLoop = false)
-        params.zip(values).foreach { case (parameter, value) => context.bindings += parameter -> new Binding(mutable = false, value) }
-        try {
-          eval(body)(context)
-        } catch {
-          case ReturnException(value) => value.getOrElse(Value.None)
-        }
-      }
-    }
+    case Arrow(params, body) => new Closure(params, body)
     case Binary(left, op, right) => eval(Call(Ident(op), Seq(left, right)))
     case Unary(op, expr) => eval(Call(Ident(op), Seq(expr)))
     case Cmp(ops, exprs) =>
@@ -124,18 +126,22 @@ object Interpreter {
           binding.value = eval(expr)
       }
       Value.None
-    case Assign(Call(fn@Ident(_), params), body) if params.forall(_.isInstanceOf[Ident]) =>
-      eval(Declare(Declare.Let, fn, Arrow(params.collect { case Ident(parameter) => parameter }, body)))
+    case Assign(call@Call(Ident(_), params), body) => eval(Function(call, Seq(body)))
     case Assign(_, _) => `not implemented`
     case Declare(kind, Ident(name), expr) =>
-      context.bindings.get(name) match {
-        case Some(_) => error(s"$name is already declared")
-        case None =>
-          val mutable = kind match { case Declare.Var => true case Declare.Let => false }
-          context.bindings += name -> new Binding(mutable, eval(expr))
-          Value.None
-      }
+      if(context.bindings.contains(name)) error(s"$name is already declared")
+      val mutable = kind match { case Declare.Var => true case Declare.Let => false }
+      context.bindings += name -> new Binding(mutable, eval(expr))
+      Value.None
     case Declare(_, _, _) => `not implemented`
+    case Function(Call(Ident(fn), parameters), body) =>
+      val params = parameters.map { case Ident(name) => name }
+      if(context.bindings.contains(fn)) error(s"$fn is already declared")
+      val binding = new Binding(mutable = false, null)
+      context.bindings += fn -> binding
+      binding.value = new Closure(params, Sequence(body))
+      Value.None
+    case Function(_, _) => `not implemented`
     case Print(expr) => println(Value.toString(eval(expr))); Value.None
     case Sequence(exprs) => eval(exprs)(context.child())
     case While(cond, body) =>

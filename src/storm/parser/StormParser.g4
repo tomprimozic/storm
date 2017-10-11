@@ -23,6 +23,7 @@ statement returns [Node result]:
       expr                                                  { $result = $expr.result; }
     | pattern '=' expr                                      { $result = assign($pattern.result, $expr.result); }
     | decl=('let' | 'var') pattern '=' expr                 { $result = declare($decl, $pattern.result, $expr.result); }
+    | ('fun' | 'function') logic '{' statements '}'         { $result = function($logic.result, $statements.result); }
     | 'print' expr                                          { $result = print($expr.result); }
     | 'while' expr '{' statements '}'                       { $result = while_($expr.result, $statements.result); }
     | block_if                                              { $result = $block_if.result; }
@@ -65,7 +66,7 @@ comparison returns [Node result]:
 arithmetic returns [Node result]:
       <assoc=right>left=arithmetic op='^' right=arithmetic  { $result = op($left.result, $op, $right.result); }
     | left=arithmetic op=('*' | '/') right=arithmetic       { $result = op($left.result, $op, $right.result); }
-    | op=('+' | '-') '(' args+=expr (',' args+=expr )+ ','? ')'       { $result = call($op, $args); }
+    | op=('+' | '-') '(' args+=expr (',' args+=expr )+ ','? ')'     { $result = call($op, $args); }
     | op=('^' | '*' | '/' | '==' | '!=' | '<' | '>' | '<=' | '>=') '(' (args+=expr (',' args+=expr )* ','?)? ')'       { $result = call($op, $args); }
     | op=('-' | '+') arithmetic                             { $result = op($op, $arithmetic.result); }
     | atomic                                                { $result = $atomic.result; }

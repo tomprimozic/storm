@@ -46,6 +46,8 @@ WHILE:      'while' ;
 RETURN:     'return' ;
 BREAK:      'break' ;
 CONTINUE:   'continue' ;
+FUNCTION:   'function' ;
+FUN:        'fun' ;
 
 IDENT:                      [_a-zA-Z] ([-_a-zA-Z0-9]* [_a-zA-Z0-9])? ;
 

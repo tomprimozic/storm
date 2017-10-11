@@ -35,6 +35,7 @@ class InterpreterTest extends FunSuite {
     assert(eval("x = 0; while x < 10 { x = x + 1; break }; x") == Value(1))
     assert(eval("x = 0; y = 0; while x < 10 { x = x + 1; if math.mod(x, 3) == 0 { continue } else { y = y + 1 } }; y") == Value(7))
     assert(eval("f = () -> (return 2; 3); f()") == Value(2))
+    assert(eval("fib(n) = if n < 2 then n else fib(n - 2) + fib(n - 1); fib(7)") == Value(13))
   }
 
   test("errors") {

@@ -64,6 +64,7 @@ abstract class Helper(input: TokenStream) extends org.antlr.v4.runtime.Parser(in
   def if_(cond: Node, thenExpr: Node, elseExpr: Node) = If(cond, thenExpr, elseExpr)
   def assign(pattern: Node, expr: Node) = Assign(pattern, expr)
   def declare(kind: Token, pattern: Node, expr: Node) = Declare(kind = kind.getText match { case "var" => Declare.Var case "let" => Declare.Let }, pattern, expr)
+  def function(definition: Node, body: Seq[Node]) = Function(definition, body)
   def print(expr: Node) = Print(expr)
   def sequence(statements: java.util.List[StatementContext]) = if(statements.size() == 1) statements.get(0).result else Sequence(statements.asScala.map(_.result))
   def while_(cond: Node, body: Seq[Node]) = While(cond, body)

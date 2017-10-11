@@ -20,6 +20,7 @@ case class Or(exprs: Seq[Node]) extends Node
 case class If(cond: Node, thenExpr: Node, elseExpr: Node) extends Node
 case class Assign(pattern: Node, expr: Node) extends Node
 case class Declare(kind: Declare.Kind, pattern: Node, expr: Node) extends Node
+case class Function(definition: Node, body: Seq[Node]) extends Node
 case class Print(expr: Node) extends Node
 case class Sequence(exprs: Seq[Node]) extends Node
 case class While(cond: Node, body: Seq[Node]) extends Node
